@@ -1,8 +1,10 @@
 #%%
 import numpy as np
 from skimage.transform import resize
-from imaging.filter import *
 from scipy.signal import sawtooth, square
+
+#%%
+from bayesee.imaging.filter import *
 
 #%%
 def add_by_coord(large, small, upleft_i, upleft_j):

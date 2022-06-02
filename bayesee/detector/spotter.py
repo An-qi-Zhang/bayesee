@@ -11,10 +11,10 @@ if cuda.is_available():
     import cupyx.scipy.signal as sg
 
 #%%
-from detector.observer import Observer
-from imaging.image import *
-from imaging.filter import *
-from operation.nb2d import *
+from bayesee.detector.observer import Observer
+from bayesee.imaging.image import *
+from bayesee.imaging.filter import *
+from bayesee.operation.nb2d import *
 
 #%%
 class Spotter(Observer):
@@ -89,7 +89,7 @@ class UncertainSpotter(Observer):
             def func(img, tar, whiten, uncer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
-                elif whiten.isnumeric():
+                elif type(whiten) == int or type(whiten) == float:
                     whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
@@ -128,7 +128,7 @@ class UncertainSpotter(Observer):
             def func(img, tar, weight, uncer):
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local standard deviation matrix of the image.
-                elif weight.isnumeric():
+                elif type(weight) == int or type(weight) == float:
                     weight_img = 1/local_std(img, weight)
                 else:
                     raise ValueError('Unable to interpret the weighting parameter.')
@@ -165,7 +165,7 @@ class UncertainSpotter(Observer):
             def func(img, tar, whiten, weight, uncer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
-                elif whiten.isnumeric():
+                elif type(whiten) == int or type(whiten) == float:
                     whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
@@ -176,7 +176,7 @@ class UncertainSpotter(Observer):
                 
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local variance matrix of the image.
-                elif weight.isnumeric():
+                elif type(weight) == int or type(weight) == float:
                     weight_img = 1/local_std(img, weight)
                 else:
                     raise ValueError('Unable to interpret the weighting parameter.')
@@ -213,7 +213,7 @@ class UncertainSpotter(Observer):
             def func(img, tar, whiten, weight, uncer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
-                elif whiten.isnumeric():
+                elif type(whiten) == int or type(whiten) == float:
                     whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
@@ -224,7 +224,7 @@ class UncertainSpotter(Observer):
                 
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local variance matrix of the image.
-                elif weight.isnumeric():
+                elif type(weight) == int or type(weight) == float:
                     weight_img = 1/local_std(img, weight)
                 else:
                     raise ValueError('Unable to interpret the weighting parameter.')
@@ -292,7 +292,7 @@ class UncertainSpotter(Observer):
                 
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local standard deviation matrix of the image.
-                elif weight.isnumeric():
+                elif type(weight) == int or type(weight) == float:
                     weight_img = 1/local_std(csfed_img, weight)
                 else:
                     raise ValueError('Unable to interpret the weighting parameter.')
@@ -329,7 +329,7 @@ class UncertainSpotter(Observer):
             def func(img, tar, weight, csf, uncer):
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local standard deviation matrix of the image.
-                elif weight.isnumeric():
+                elif type(weight) == int or type(weight) == float:
                     weight_img = 1/local_std(img, weight)
                 else:
                     raise ValueError('Unable to interpret the weighting parameter.')

@@ -10,10 +10,10 @@ def filter_fft(x, fft_filter):
 #%%
 def luminance_modulate_straight(x, direction, cut, ratio, flip=True):
     if direction == 'h':
-        x_mod = np.hstack((x[:,:cut]/np.sqrt(ratio),x[:,cut+1:]*np.sqrt(ratio)))
+        x_mod = np.hstack((x[:,:cut]/np.sqrt(ratio),x[:,cut:]*np.sqrt(ratio)))
         if flip: x_mod = np.fliplr(x_mod)
     elif direction == 'v':
-        x_mod = np.vstack((x[:cut,:]/np.sqrt(ratio),x[cut+1:,:]*np.sqrt(ratio)))
+        x_mod = np.vstack((x[:cut,:]/np.sqrt(ratio),x[cut:,:]*np.sqrt(ratio)))
         if flip: x_mod = np.flipud(x_mod) 
     else:
         raise ValueError('Direction is undefined.')
@@ -34,11 +34,11 @@ def contrast_modulate_straight(x, direction, cut, ratio, flip=False):
     x_mean = x.mean()
     x -= x_mean
     if direction == 'h':
-        x_mod = np.hstack((x[:,:cut]/np.sqrt(ratio),x[:,cut+1:]*np.sqrt(ratio)))
+        x_mod = np.hstack((x[:,:cut]/np.sqrt(ratio),x[:,cut:]*np.sqrt(ratio)))
         if flip: x_mod = np.fliplr(x_mod)
         p = (col - cut - 1) / col
     elif direction == 'v':
-        x_mod = np.vstack((x[:cut,:]/np.sqrt(ratio),x[cut+1:,:]*np.sqrt(ratio)))
+        x_mod = np.vstack((x[:cut,:]/np.sqrt(ratio),x[cut:,:]*np.sqrt(ratio)))
         if flip: x_mod = np.flipud(x_mod) 
         p = (row - cut - 1) / row
     else:

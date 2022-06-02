@@ -9,10 +9,10 @@ if cuda.is_available():
     import cupyx.scipy.signal as sg
 
 #%%
-from operation.nb2d import *
-from imaging.image import *
-from imaging.filter import *
-from detector.observer import Observer
+from bayesee.operation.nb2d import *
+from bayesee.imaging.image import *
+from bayesee.imaging.filter import *
+from bayesee.detector.observer import Observer
 
 #%%
 class Searcher(Observer):
