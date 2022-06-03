@@ -63,9 +63,9 @@ class Subject:
                 
             fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
             fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
-            fig.text(0.1, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
+            fig.text(0.05, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
 
-        savefig('plot_accuracy_', self.plot_name + '.svg', dpi=300, bbox_inches='tight')
+        savefig('plot_accuracy_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
         close()
         
     def bin_vars(self, bin_var, n_bins):

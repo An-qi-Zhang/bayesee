@@ -2,6 +2,7 @@
 *.pdf
 *.npy
 *.png
+*.svg
 *.mat
 *.csv
 
