@@ -13,7 +13,7 @@ def add_by_coord(large, small, upleft_i, upleft_j):
     s_row, s_col = small.shape
     l_row, l_col = large.shape
 
-    added = np.ones_like(large)
+    added = large.copy()
     added[upleft_i:upleft_i+s_row, upleft_j:upleft_j+s_col] += small
 
     return added
@@ -44,7 +44,7 @@ def occlude_by_coord(large, small, upleft_i, upleft_j):
     s_row, s_col = small.shape
     l_row, l_col = large.shape
 
-    occluded = np.ones_like(large)
+    occluded = large.copy()
     occluded[upleft_i:upleft_i+s_row, upleft_j:upleft_j+s_col] = small
 
     return occluded
