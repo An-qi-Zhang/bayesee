@@ -60,8 +60,8 @@ class Observer:
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                weighted_img = (img-img.mean())*weight_img + img.mean()
-                weighted_tar = (tar-tar.mean())*weight_tar + tar.mean()
+                weighted_img = (img-img.mean())*weight_img
+                weighted_tar = (tar-tar.mean())*weight_tar
                 
                 return self.inner_prod(weighted_img, weighted_tar), weighted_img, weighted_tar
                 
@@ -90,8 +90,8 @@ class Observer:
                 
                 whitened_img = filter_fft(img, whiten_img)
                 whitened_tar = filter_fft(tar, whiten_tar)
-                weighted_whitened_img = (whitened_img-whitened_img.mean())*weight_img + whitened_img.mean()
-                weighted_whitened_tar = (whitened_tar-whitened_tar.mean())*weight_tar + whitened_tar.mean()
+                weighted_whitened_img = (whitened_img-whitened_img.mean())*weight_img
+                weighted_whitened_tar = (whitened_tar-whitened_tar.mean())*weight_tar
                 
                 return self.inner_prod(weighted_whitened_img, weighted_whitened_tar), weighted_whitened_img, weighted_whitened_tar
                 
@@ -118,8 +118,8 @@ class Observer:
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                whitened_weighted_img = filter_fft((img-img.mean())*weight_img+img.mean(), whiten_img) 
-                whitened_weighted_tar = filter_fft((tar-tar.mean())*weight_tar+tar.mean(), whiten_tar)
+                whitened_weighted_img = filter_fft((img-img.mean())*weight_img, whiten_img) 
+                whitened_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, whiten_tar)
                 
                 return self.inner_prod(whitened_weighted_img, whitened_weighted_tar), whitened_weighted_img, whitened_weighted_tar
                 
@@ -145,8 +145,8 @@ class Observer:
                 
                 weight_tar = cut_center(weight_img, tar)
                 
-                weighted_csfed_img = (csfed_img-csfed_img.mean())*weight_img+csfed_img.mean()
-                weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar+csfed_tar.mean()
+                weighted_csfed_img = (csfed_img-csfed_img.mean())*weight_img
+                weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar
                 
                 return self.inner_prod(weighted_csfed_img, weighted_csfed_tar), weighted_csfed_img, weighted_csfed_tar
         elif self.method == 'ERTM':
@@ -160,8 +160,8 @@ class Observer:
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                csfed_weighted_img = filter_fft((img-img.mean())*weight_img+img.mean(), csf_filter(*img.shape,**csf))
-                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar+tar.mean(), csf_filter(*tar.shape,**csf))
+                csfed_weighted_img = filter_fft((img-img.mean())*weight_img, csf_filter(*img.shape,**csf))
+                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, csf_filter(*tar.shape,**csf))
                 
                 return self.inner_prod(csfed_weighted_img, csfed_weighted_tar), csfed_weighted_img, csfed_weighted_tar
             

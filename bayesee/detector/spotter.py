@@ -135,8 +135,8 @@ class UncertainSpotter(Observer):
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                weighted_img = (img-img.mean())*weight_img + img.mean()
-                weighted_tar = (tar-tar.mean())*weight_tar + tar.mean()
+                weighted_img = (img-img.mean())*weight_img
+                weighted_tar = (tar-tar.mean())*weight_tar
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
@@ -185,8 +185,8 @@ class UncertainSpotter(Observer):
                 
                 whitened_img = filter_fft(img, whiten_img)
                 whitened_tar = filter_fft(tar, whiten_tar)
-                weighted_whitened_img = (whitened_img-whitened_img.mean())*weight_img + whitened_img.mean()
-                weighted_whitened_tar = (whitened_tar-whitened_tar.mean())*weight_tar + whitened_tar.mean()
+                weighted_whitened_img = (whitened_img-whitened_img.mean())*weight_img
+                weighted_whitened_tar = (whitened_tar-whitened_tar.mean())*weight_tar
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
@@ -233,8 +233,8 @@ class UncertainSpotter(Observer):
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                whitened_weighted_img = filter_fft((img-img.mean())*weight_img+img.mean(), whiten_img) 
-                whitened_weighted_tar = filter_fft((tar-tar.mean())*weight_tar+tar.mean(), whiten_tar)
+                whitened_weighted_img = filter_fft((img-img.mean())*weight_img, whiten_img)
+                whitened_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, whiten_tar)
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
@@ -301,8 +301,8 @@ class UncertainSpotter(Observer):
                 
                 weight_tar = cut_center(weight_img, tar)
                 
-                weighted_csfed_img = (csfed_img-csfed_img.mean())*weight_img+csfed_img.mean()
-                weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar+csfed_tar.mean()
+                weighted_csfed_img = (csfed_img-csfed_img.mean())*weight_img
+                weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
@@ -338,8 +338,8 @@ class UncertainSpotter(Observer):
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                csfed_weighted_img = filter_fft((img-img.mean())*weight_img+img.mean(), csf_filter(*img.shape,**csf))
-                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar+tar.mean(), csf_filter(*tar.shape,**csf))
+                csfed_weighted_img = filter_fft((img-img.mean())*weight_img, csf_filter(*img.shape,**csf))
+                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, csf_filter(*tar.shape,**csf))
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
