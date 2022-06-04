@@ -7,7 +7,9 @@ from numba import njit
 from math import sqrt
 import scipy.optimize as opt
 from copy import copy
-from ..operations import mathfunc
+
+#%%
+from bayesee.operation import mathfunc
 
 def decibel_error(x, dx):
     return np.stack((-20*np.log10(1-dx/x), 20*np.log10(1+dx/x)), axis=0)

@@ -50,16 +50,16 @@ class Subject:
         for i in range(n_sessions):
             for j in range(n_conditions):
                 if n_sessions == 1 or n_conditions == 1:
-                    a_ind = j if n_sessions == 1 else i
+                    a_idx = j if n_sessions == 1 else i
                 else:
-                    a_ind = j,i
+                    a_idx = j,i
                     
-                axs[a_ind].scatter(self.vars[x_var][i,j,:], self.vars[p_acc_var][i,j,:], color='k', label=f'Sess:{i+1}, Cond{j+1}')
-                axs[a_ind].legend(loc='best', fontsize=pargs['fontsizes'][1])
-                axs[a_ind].set_xlim(amp_min, amp_max)
-                axs[a_ind].set_ylim(0.4, 1.1)
-                axs[a_ind].tick_params(axis='x', labelsize= pargs['fontsizes'][2])
-                axs[a_ind].tick_params(axis='y', labelsize= pargs['fontsizes'][2])
+                axs[a_idx].scatter(self.vars[x_var][i,j,:], self.vars[p_acc_var][i,j,:], color='k', label=f'Sess:{i+1}, Cond{j+1}')
+                axs[a_idx].legend(loc='best', fontsize=pargs['fontsizes'][1])
+                axs[a_idx].set_xlim(amp_min, amp_max)
+                axs[a_idx].set_ylim(0.4, 1.1)
+                axs[a_idx].tick_params(axis='x', labelsize= pargs['fontsizes'][2])
+                axs[a_idx].tick_params(axis='y', labelsize= pargs['fontsizes'][2])
                 
             fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
             fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
