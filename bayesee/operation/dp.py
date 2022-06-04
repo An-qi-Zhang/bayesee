@@ -13,7 +13,7 @@ def glm_disc(amp, stimulus, response):
     gamma = np.zeros_like(amp)
     unq_amps = np.unique(amp)
     
-    for i, unq_amp in enumerate(unq_amps):
+    for unq_amp in unq_amps:
         id = amp == unq_amp
         pBb = np.sum((stimulus==1) & (response==1) & id)/len(id)
         pBa = np.sum((stimulus==0) & (response==1) & id)/len(id)
@@ -32,7 +32,7 @@ def glm_cont(amp, stimulus, response):
     gamma = np.zeros_like(amp)
     unq_amps = np.unique(amp)
     
-    for i, unq_amp in enumerate(unq_amps):
+    for unq_amp in unq_amps:
         id = amp == unq_amp
         ra, rb = response[(stimulus==0) & id], response[(stimulus==1) & id]
         na, nb = len(ra), len(rb)
@@ -95,24 +95,21 @@ def glm_cont_uncertainty(amp, stimulus, response):
 
 #%%
 def linear_disc_th(amp, stimulus, response):
-    # dp = 1
     dp, gamma, k = glm_disc_linear(amp, stimulus, response)
-    return k
+    return 1/k # dp = 1 = th * k
 
 #%%
 def linear_cont_th(amp, stimulus, response):
-    # dp = 1
+    
     dp, gamma, k = glm_cont_linear(amp, stimulus, response)
-    return k
+    return 1/k # dp = 1 = th * k
 
 #%%
 def uncertain_disc_th(amp, stimulus, response):
-    # dp = 1
     alpha, beta = glm_disc_uncertainty(amp, stimulus, response)
-    return np.log(np.e*(1+beta)-beta)/alpha
+    return np.log(np.e*(1+beta)-beta)/alpha # dp = 1 = ln((e^(alpha*th)+beta)/(1+beta))
 
 #%%
 def uncertain_cont_th(amp, stimulus, response):
-    # dp = 1
     alpha, beta = glm_cont_uncertainty(amp, stimulus, response)
-    return np.log(np.e*(1+beta)-beta)/alpha
+    return np.log(np.e*(1+beta)-beta)/alpha # dp = 1 = ln((e^(alpha*th)+beta)/(1+beta))
