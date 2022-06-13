@@ -25,10 +25,7 @@ class Spotter(Observer):
         if inner_prod is None:
             def x_size_dot(img, tar):
                 img_cut = cut_center(img, tar)
-                if cuda.is_available():
-                    return cp.einsum('ij,ij', cp.asarray(img_cut), cp.asarray(tar))
-                else:
-                    return nb2dot(img_cut, tar)
+                return nb2dot(img_cut, tar)
                 
             self.inner_prod = x_size_dot
         else:
@@ -43,10 +40,7 @@ class UncertainSpotter(Observer):
         if inner_prod is None:
             def x_size_dot(img, tar, upleft_i, upleft_j):
                 img_cut = cut_by_coord(img, tar, upleft_i, upleft_j)
-                if cuda.is_available():
-                    return cp.einsum('ij,ij->', img_cut, tar)
-                else:
-                    return nb2dot(img_cut, tar)
+                return nb2dot(img_cut, tar)
                 
             inner_prod = x_size_dot
 
