@@ -2,6 +2,8 @@
 import numpy as np
 from scipy.stats import norm, t
 from scipy.optimize import curve_fit
+from numba import njit, prange
+from math import erf, sqrt, log10
 
 #%%
 def glm_disc(amp, stimulus, response):
@@ -113,3 +115,30 @@ def uncertain_disc_th(amp, stimulus, response):
 def uncertain_cont_th(amp, stimulus, response):
     alpha, beta = glm_cont_uncertainty(amp, stimulus, response)
     return np.log(np.e*(1+beta)-beta)/alpha # dp = 1 = ln((e^(alpha*th)+beta)/(1+beta))
+
+#%%
+@njit(cache = True, fastmath=True, nogil=True)
+def neg_ll_glm_disc(x, amp, stimulus, response):
+    # x: alpha, beta, gamma
+    # amp with values that are same or different or hybrid
+    # stimulus: 0-a 1-b, 1d array
+    # response: discrete response 0-A 1-B, 1d array
+    
+    if x[0] < 0:
+        return 1
+    neg_ll = 0
+    
+    unq_amps = np.unique(amp)
+    for i in prange(len(unq_amps)):
+        id = amp == unq_amps[i]
+        tBb = sum((stimulus==1) & (response==1) & id)
+        tBa = sum((stimulus==0) & (response==1) & id)
+        tAb = sum((stimulus==1) & (response==0) & id)
+        tAa = sum((stimulus==0) & (response==0) & id)
+
+        pBb = 0.5*(erf(1/sqrt(2)*(0.5*(unq_amps[i]/x[0])**x[1]-x[2]))+1)
+        pBa = 0.5*(erf(1/sqrt(2)*(-0.5*(unq_amps[i]/x[0])**x[1]-x[2]))+1)
+        
+        neg_ll = - tBb*log10(pBb) - tAb*log10(1-pBb) - tBa*log10(pBa) - tAa*log10(1-pBa)
+    
+    return neg_ll
