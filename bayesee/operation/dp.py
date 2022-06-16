@@ -1,6 +1,6 @@
 #%%
 import numpy as np
-from scipy.stats import norm, t
+from scipy.stats import norm
 from scipy.optimize import curve_fit
 from numba import njit, prange
 from math import erf, sqrt, log10
@@ -82,7 +82,7 @@ def glm_disc_uncertainty(amp, stimulus, response):
     # response: discrete response 0-A 1-B, 1d array
     
     dp, gamma = glm_disc(amp, stimulus, response)
-    (alpha, beta),_ = curve_fit(uncertain_dp_amp, amp, dp, bounds=((0,np.inf), (0,np.inf)))
+    (alpha, beta),_ = curve_fit(uncertain_dp_amp, amp, dp, bounds=((0,0), (np.inf,np.inf)))
     return dp, gamma, alpha, beta
 
 #%%
@@ -92,7 +92,7 @@ def glm_cont_uncertainty(amp, stimulus, response):
     # response: continuous response
     
     dp, gamma = glm_cont(amp, stimulus, response)
-    (alpha, beta),_ = curve_fit(uncertain_dp_amp, amp, dp, bounds=((0,np.inf), (0,np.inf)))
+    (alpha, beta),_ = curve_fit(uncertain_dp_amp, amp, dp, bounds=((0,0), (np.inf,np.inf)))
     return dp, gamma, alpha, beta
 
 #%%
@@ -139,6 +139,13 @@ def neg_ll_glm_disc(x, amp, stimulus, response):
         pBb = 0.5*(erf(1/sqrt(2)*(0.5*(unq_amps[i]/x[0])**x[1]-x[2]))+1)
         pBa = 0.5*(erf(1/sqrt(2)*(-0.5*(unq_amps[i]/x[0])**x[1]-x[2]))+1)
         
-        neg_ll = - tBb*log10(pBb) - tAb*log10(1-pBb) - tBa*log10(pBa) - tAa*log10(1-pBa)
+        neg_ll = neg_ll - tBb*log10(pBb) - tAb*log10(1-pBb) - tBa*log10(pBa) - tAa*log10(1-pBa)
     
     return neg_ll
+
+#%%
+def p_acc_glm(amp, alpha, beta, gamma):
+    pBb = norm.cdf(0.5*(amp/alpha)**beta-gamma)
+    pBa = norm.cdf(-0.5*(amp/alpha)**beta-gamma)
+    return 0.5 * (pBb + 1 - pBa)
+    
