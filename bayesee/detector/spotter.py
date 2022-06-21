@@ -52,7 +52,7 @@ class UncertainSpotter(Observer):
         if self.method == 'UTM':
             def func(img, tar, uncer):
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -62,12 +62,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(img, tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(img, tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(img, tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(img, tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                 
@@ -79,7 +79,7 @@ class UncertainSpotter(Observer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -91,7 +91,7 @@ class UncertainSpotter(Observer):
                 whitened_tar = filter_fft(tar, whiten_tar)
 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -101,12 +101,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(whitened_img, whitened_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(whitened_img, whitened_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(whitened_img, whitened_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(whitened_img, whitened_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                 
@@ -128,7 +128,7 @@ class UncertainSpotter(Observer):
                 weighted_tar = (tar-tar.mean())*weight_tar
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -138,12 +138,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(weighted_img, weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(weighted_img, weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(weighted_img, weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(weighted_img, weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                 
@@ -155,7 +155,7 @@ class UncertainSpotter(Observer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -178,7 +178,7 @@ class UncertainSpotter(Observer):
                 weighted_whitened_tar = (whitened_tar-whitened_tar.mean())*weight_tar
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -188,12 +188,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(weighted_whitened_img, weighted_whitened_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(weighted_whitened_img, weighted_whitened_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(weighted_whitened_img, weighted_whitened_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(weighted_whitened_img, weighted_whitened_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                 
@@ -205,7 +205,7 @@ class UncertainSpotter(Observer):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -226,7 +226,7 @@ class UncertainSpotter(Observer):
                 whitened_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, whiten_tar)
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -236,12 +236,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(whitened_weighted_img, whitened_weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(whitened_weighted_img, whitened_weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(whitened_weighted_img, whitened_weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(whitened_weighted_img, whitened_weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                     
@@ -254,7 +254,7 @@ class UncertainSpotter(Observer):
                 csfed_tar = filter_fft(tar, csf_filter(*tar.shape, **csf))
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -264,12 +264,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(csfed_img, csfed_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(csfed_img, csfed_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(csfed_img, csfed_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(csfed_img, csfed_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                     
@@ -294,7 +294,7 @@ class UncertainSpotter(Observer):
                 weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -304,12 +304,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(weighted_csfed_img, weighted_csfed_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(weighted_csfed_img, weighted_csfed_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(weighted_csfed_img, weighted_csfed_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(weighted_csfed_img, weighted_csfed_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                     
@@ -331,7 +331,7 @@ class UncertainSpotter(Observer):
                 csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, csf_filter(*tar.shape,**csf))
                 
                 size = uncer['size']
-                dist = distance_to_point(*img.shape, (img.shape[0]-img.shape[0]%2)/2,(img.shape[1]-img.shape[1]%2)/2)
+                dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
                 circ = circ_mask(*img.shape, size)
                 uncer_mat = uncer['func'](dist) * circ
                 uncer_mat /= np.einsum('ij->', uncer_mat)
@@ -341,12 +341,12 @@ class UncertainSpotter(Observer):
                     rand_mat = np.random.rand(*img.shape)
                     for i,j in np.ndindex(img.shape):
                         if uncer_mat[i,j] > rand_mat[i,j]:
-                            responses[i,j]=self.inner_prod(csfed_weighted_img, csfed_weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            responses[i,j]=self.inner_prod(csfed_weighted_img, csfed_weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                 elif uncer['info'] == "prior":
                     likely = np.zeros_like(img)
                     for i,j in np.ndindex(img.shape):
                         if circ[i,j] == 1:
-                            likely[i,j] = self.inner_prod(csfed_weighted_img, csfed_weighted_tar, i-(tar.shape[0]-tar.shape[0]%2)//2, j-(tar.shape[1]-tar.shape[1]%2)//2)
+                            likely[i,j] = self.inner_prod(csfed_weighted_img, csfed_weighted_tar, i-tar.shape[0]//2, j-tar.shape[1]//2)
                     responses = uncer_mat*likely
                     responses[responses>0] = np.log(responses[responses>0])
                     
@@ -357,7 +357,7 @@ class UncertainSpotter(Observer):
             self.respond = resp_func # return responses, filtered image, and filtered target
 
     def give_response(self, img, tar):
-        self.responses, self.pp_img, self.pp_tar = self.respond(img, tar)
+        self.responses, _, _ = self.respond(img, tar)
         if self.uncer['focus'] == "max":
             self.response = self.responses.max()
         elif self.uncer['focus'] == "sum":

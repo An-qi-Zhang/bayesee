@@ -34,8 +34,9 @@ class Observer:
             def func(img, tar, whiten):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
+                    whiten_img[whiten_img.shape[0]//2, whiten_img.shape[1]//2] = 0
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -70,8 +71,9 @@ class Observer:
             def func(img, tar, whiten, weight):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
+                    whiten_img[whiten_img.shape[0]//2, whiten_img.shape[1]//2] = 0
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -100,8 +102,9 @@ class Observer:
             def func(img, tar, whiten, weight):
                 if whiten is None:
                     whiten_img = 1/np.absolute(np.fft.fftshift(np.fft.fft2(img)))
+                    whiten_img[whiten_img.shape[0]//2, whiten_img.shape[1]//2] = 0
                 elif type(whiten) == int or type(whiten) == float:
-                    whiten_img = exponential_distance(*img.shape, (img.shape[0]-img.shape[0]%2)/2.0, (img.shape[1]-img.shape[1]%2)/2.0, whiten) # whitening exponent is the additive inverse of the image exponent
+                    whiten_img = exponential_distance(*img.shape, img.shape[0]//2, img.shape[1]//2, whiten) # whitening exponent is the additive inverse of the image exponent
                 elif whiten.shape == img.shape:
                     whiten_img = whiten
                 else:
@@ -149,6 +152,8 @@ class Observer:
                 weighted_csfed_tar = (csfed_tar-csfed_tar.mean())*weight_tar
                 
                 return self.inner_prod(weighted_csfed_img, weighted_csfed_tar), weighted_csfed_img, weighted_csfed_tar
+            
+            self.respond = lambda img, tar: func(img, tar, weight, csf)
         elif self.method == 'ERTM':
             def func(img, tar, weight, csf):
                 if weight.shape == img.shape:
@@ -165,10 +170,10 @@ class Observer:
                 
                 return self.inner_prod(csfed_weighted_img, csfed_weighted_tar), csfed_weighted_img, csfed_weighted_tar
             
-            self.respond = lambda img, tar: func(img, tar, csf)
+            self.respond = lambda img, tar: func(img, tar, weight, csf)
         elif self.method == 'DIY':
             self.respond = resp_func # return response, filtered image, and filtered target
             
     def give_response(self, img, tar):
-        self.response, self.pp_img, self.pp_tar = self.respond(img, tar)
+        self.response, _, _ = self.respond(img, tar)
         return self.response

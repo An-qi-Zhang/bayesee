@@ -108,12 +108,13 @@ def csf_filter(row, col, ppd=60, d=4, w=550, a=0.85, b=0.15, c=0.065, n=2):
     yy_deg = yy_img / (col/ppd)
     freq_deg = np.hypot(xx_deg, yy_deg)
     
-    u0 = (d*np.pi()*10**6/(w*180))
+    u0 = (d*np.pi*10**6/(w*180))
     u1 = 21.95 - 5.512*d + 0.3922*d**2
     uh = freq_deg/ u0
     D = (np.arccos(uh) - uh*np.sqrt(1-uh**2))*2/np.pi
     otf = np.sqrt(D)*(1 + (freq_deg/u1)**2)**(-0.62)
     csf = otf**(1-a*np.exp(-b*freq_deg**n))**np.exp(-c*freq_deg)
+    csf[row//2, col//2] = 0 # physically meaningless
     
     return csf
 
