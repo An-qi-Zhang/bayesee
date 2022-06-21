@@ -41,7 +41,7 @@ def glm_cont(amp, stimulus, response):
         ma, mb = ra.mean(), rb.mean()
         va, vb = ra.var(), rb.var()
         sd_ave = np.sqrt((na*va+nb*vb)/(na+nb-2))
-        dp[id] = abs(mb - ma)/sd_ave
+        dp[id] = (mb - ma)/sd_ave
         gamma[id] = (na*vb*ma+nb*va*mb)/(na*vb+nb*va)
     
     return dp, gamma
@@ -69,7 +69,7 @@ def glm_disc_linear(amp, stimulus, response):
 def glm_cont_linear(amp, stimulus, response):
     # amp with values that are same or different or hybrid
     # stimulus: 0-a 1-b, 1d array
-    # response: discrete response 0-A 1-B, 1d array
+    # response: continous response
     
     dp, gamma = glm_cont(amp, stimulus, response)
     k,_ = curve_fit(linear_dp_amp, amp, dp, bounds=((0,np.inf)))
@@ -108,12 +108,12 @@ def linear_cont_th(amp, stimulus, response):
 
 #%%
 def uncertain_disc_th(amp, stimulus, response):
-    alpha, beta = glm_disc_uncertainty(amp, stimulus, response)
+    dp, gamma, alpha, beta = glm_disc_uncertainty(amp, stimulus, response)
     return np.log(np.e*(1+beta)-beta)/alpha # dp = 1 = ln((e^(alpha*th)+beta)/(1+beta))
 
 #%%
 def uncertain_cont_th(amp, stimulus, response):
-    alpha, beta = glm_cont_uncertainty(amp, stimulus, response)
+    dp, gamma, alpha, beta = glm_cont_uncertainty(amp, stimulus, response)
     return np.log(np.e*(1+beta)-beta)/alpha # dp = 1 = ln((e^(alpha*th)+beta)/(1+beta))
 
 #%%

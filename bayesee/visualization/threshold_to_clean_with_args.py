@@ -96,56 +96,6 @@ def bin_phase_similarity(bin_amps, bin_spatSim, bin_ampSim, subject, path_save='
     return db_exp_ths
 
 #%%
-def bin_phase_similarity_2(bin_amps1, bin_spatSim1, bin_ampSim1, subject1, bin_amps2, bin_spatSim2, bin_ampSim2, subject2, path_save='.'):
-
-    n_bins1 = bin_amps1.shape[0]
-    db_exp_ths1, db_CI68s1 = load_bin_ths(path_save, subject1, n_bins1)
-    ave_low_ampSim1 = bin_ampSim1[:,:,0].mean()
-    ave_high_ampSim1 = bin_ampSim1[:,:,1].mean()
-    low_spatSim1 = bin_spatSim1[:,:,0].mean(axis=1)
-    high_spatSim1 = bin_spatSim1[:,:,1].mean(axis=1)
-    
-    n_bins2 = bin_amps2.shape[0]
-    db_exp_ths2, db_CI68s2 = load_bin_ths(path_save, subject2, n_bins2)
-    ave_low_ampSim2 = bin_ampSim2[:,:,0].mean()
-    ave_high_ampSim2 = bin_ampSim2[:,:,1].mean()
-    low_spatSim2 = bin_spatSim2[:,:,0].mean(axis=1)
-    high_spatSim2 = bin_spatSim2[:,:,1].mean(axis=1)
-    
-    db_exp_ths_ave, db_CI68s_ave = load_bin_ths(path_save, "AVE", n_bins1)
-    
-    fig = figure(figsize=(10,8))
-    subplots_adjust(bottom=0.1, left=0.15)
-    
-    plot(low_spatSim1, db_exp_ths_ave[:,0], 'b-')
-    plot(high_spatSim1, db_exp_ths_ave[:,1], 'r-')
-    
-    errorbar(low_spatSim1, db_exp_ths1[:,0], yerr=db_CI68s1[:,:,0].T, fmt='bX', mfc='b', capsize=12, markersize=16, label='ampSim:{:.2f}'.format(ave_low_ampSim1))
-    errorbar(high_spatSim1, db_exp_ths1[:,1], yerr=db_CI68s1[:,:,1].T, fmt='bo', mfc='b', capsize=12, markersize=16, label='ampSim:{:.2f}'.format(ave_high_ampSim1))
-    
-    errorbar(low_spatSim2, db_exp_ths2[:,0], yerr=db_CI68s2[:,:,0].T, fmt='rX', mfc='r', capsize=12, markersize=16)
-    errorbar(high_spatSim2, db_exp_ths2[:,1], yerr=db_CI68s2[:,:,1].T, fmt='ro', mfc='r', capsize=12, markersize=16)
-    
-    ylim([44, 64])
-    
-    handles, labels = gca().get_legend_handles_labels()
-    handles = [copy(i[0]) if isinstance(i, container.ErrorbarContainer) else copy(i) for i in handles]
-    for i in handles:
-        i.set_markeredgecolor('k')
-        i.set_markerfacecolor('k')
-    by_label = dict(zip(labels, handles))
-    gca().legend(by_label.values(), by_label.keys(),  loc='upper right', fontsize=24)
-
-    gcf().text(0.5, 0.005, 'Spatial Similarity', ha='center', fontsize=36)
-    gcf().text(0.01, 0.5, 'Thresholds (dB)', va='center', rotation='vertical', fontsize=36)
-
-    savefig(path_save+'/bin_phase_similarity_{}_{}.pdf'.format(subject1, subject2), bbox_inches='tight')
-    savefig(path_save+'/bin_phase_similarity_{}_{}.jpeg'.format(subject1, subject2), bbox_inches='tight')
-    close()
-    
-    return db_exp_ths1, db_exp_ths2
-
-#%%
 def bin_dp_slopes(bin_amps, bin_spatSim, bin_ampSim, bin_tar_pre, bin_tempRes, subject, path_save='.'):
 
     n_bins = bin_amps.shape[0]

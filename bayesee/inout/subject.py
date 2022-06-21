@@ -1,5 +1,6 @@
 #%%
 from pathlib import Path
+from this import s
 from scipy.io import loadmat
 from scipy.stats import norm
 from scipy.optimize import minimize, curve_fit
@@ -68,7 +69,7 @@ class Subject:
                 
             fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
             fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
-            fig.text(0.05, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
+            fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
 
         savefig('plot_accuracy_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
         close()
@@ -179,23 +180,33 @@ class Subject:
                 
         fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
         fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
-        fig.text(0.25, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
 
         savefig('plot_fit_' + file.name + '.svg', dpi=300, bbox_inches='tight')
         close()
         
         return alpha, beta, gamma
     
-    def bin_vars(self, bin_var, n_bins):
-        bin_bounds = [np.quantile(self.vars[bin_var], b/n_bins) for b in range(n_bins+1)]
-        self.vars["bin_id"] = np.digitize(self.vars[bin_var], bin_bounds)
+    def bin_vars(self, bin_var, n_bins, axis=None):
+        if axis is None:
+            bin_bounds = [np.quantile(self.vars[bin_var], b/n_bins) for b in range(n_bins+1)]
+            self.vars["bin_id"] = np.digitize(self.vars[bin_var], bin_bounds)
+        else:
+            swapped_bin_var = np.swapaxes(self.vars[bin_var], axis, 0)
+            swapped_bin_id = np.zeros_like(swapped_bin_var)
+            for i in range(swapped_bin_var.shape[0]):
+                bin_bounds = [np.quantile(swapped_bin_var[i,...], b/n_bins) for b in range(n_bins+1)]
+                swapped_bin_id[i,...] = np.digitize(swapped_bin_var[i,...], bin_bounds)
+                
+            self.vars["bin_id"] = np.swapaxes(swapped_bin_id, axis, 0)
+                
         return self.vars["bin_id"]
 
     def bin_bootstrap_neg_ll(self, bin_var, n_bins, x_var, t_pre_var, b_acc_var, inits, file, n_samp=1000):
         # inits: alpha, beta, gamma
         n_trials, n_sessions, n_conditions, n_levels = self.vars[b_acc_var].shape
         
-        b_idx = self.bin_vars(bin_var, n_bins)
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
         
         alpha = np.zeros((n_conditions,n_samp, n_bins))
         beta = np.zeros((n_conditions,n_samp, n_bins))
@@ -207,9 +218,9 @@ class Subject:
         
         for b in range(n_bins):
             for i in range(n_conditions):
-                amp = np.repeat(self.vars[x_var][np.newaxis,:,:,:], self.vars[t_pre_var].shape[0], axis=0)[:,:,i,:][b_idx[:,:,i,:]==b+1].flatten()
-                stimulus = self.vars[t_pre_var][:,:,i,:][b_idx[:,:,i,:]==b+1].flatten()
-                response = (self.vars[t_pre_var]==self.vars[b_acc_var])[:,:,i,:][b_idx[:,:,i,:]==b+1].flatten()
+                amp = np.repeat(self.vars[x_var][np.newaxis,:,i,:].flatten(order='F'), self.vars[t_pre_var].shape[0], axis=0)[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                stimulus = self.vars[t_pre_var][:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                response = (self.vars[t_pre_var]==self.vars[b_acc_var])[:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
                 o[i,b], p[i,b], q[i,b] = minimize(neg_ll_glm_disc, inits[b][i], args=(amp, stimulus, response), method='SLSQP', bounds=((1e-4, self.vars[x_var][:,i,:].max()), (0.5,4), (0, 1))).x
         
         for b in range(n_bins):
@@ -217,9 +228,9 @@ class Subject:
                 for i in range(n_conditions):
                     rand_amp = None
                     for j in range(n_levels):
-                        amp = np.repeat(self.vars[x_var][np.newaxis,:,:,:], self.vars[t_pre_var].shape[0], axis=0)[:,:,i,j][b_idx[:,:,i,j]==b+1].flatten()
-                        stimulus = self.vars[t_pre_var][:,:,i,j][b_idx[:,:,i,j]==b+1].flatten()
-                        response = (self.vars[t_pre_var]==self.vars[b_acc_var])[:,:,i,j][b_idx[:,:,i,j]==b+1].flatten()
+                        amp = np.repeat(self.vars[x_var][np.newaxis,:,i,j].flatten(order='F'), self.vars[t_pre_var].shape[0], axis=0)[b_idx[:,:,i,j].flatten(order='F')==b+1]
+                        stimulus = self.vars[t_pre_var][:,:,i,j].flatten(order='F')[b_idx[:,:,i,j].flatten(order='F')==b+1]
+                        response = (self.vars[t_pre_var]==self.vars[b_acc_var])[:,:,i,j].flatten(order='F')[b_idx[:,:,i,j].flatten(order='F')==b+1]
                         rand_idx = np.random.choice(len(amp), len(amp), replace=True)
                         
                         if rand_amp is None:
@@ -238,7 +249,7 @@ class Subject:
     def bin_bootstrap_curve(self, bin_var, n_bins, x_var, b_acc_var, file=None, p_acc_var='p_acc', n_samp=1000):
         n_trials, n_sessions, n_conditions, n_levels = self.vars[b_acc_var].shape
         
-        b_idx = self.bin_vars(bin_var, n_bins)
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
         
         alpha = np.zeros((n_conditions,n_samp, n_bins))
         beta = np.zeros((n_conditions,n_samp, n_bins))
@@ -253,8 +264,8 @@ class Subject:
                     rand_amp = None
                     norm_amp = self.vars[x_var][:,i,:].max() / 3 # proper range
                     for j in range(n_levels):
-                        amp = np.repeat(self.vars[x_var][np.newaxis,:,:,:], self.vars[b_acc_var].shape[0], axis=0)[:,:,i,j][b_idx[:,:,i,j]==b+1].flatten()
-                        p_acc = np.repeat(self.vars[p_acc_var][np.newaxis,:,:,:], self.vars[b_acc_var].shape[0], axis=0)[:,:,i,j][b_idx[:,:,i,j]==b+1].flatten()
+                        amp = np.repeat(self.vars[x_var][np.newaxis,:,i,j].flatten(order='F'), self.vars[b_acc_var].shape[0], axis=0)[b_idx[:,:,i,j].flatten(order='F')==b+1]
+                        p_acc = np.repeat(self.vars[p_acc_var][np.newaxis,:,i,j].flatten(order='F'), self.vars[b_acc_var].shape[0], axis=0)[b_idx[:,:,i,j].flatten(order='F')==b+1]
                         rand_idx = np.random.choice(len(amp), len(amp), replace=True)
                         
                         if rand_amp is None:
@@ -277,7 +288,7 @@ class Subject:
         if p_acc_var not in self.vars:
             self.calc_percent_correct(b_acc_var, p_acc_var)
         
-        b_idx = self.bin_vars(bin_var, n_bins)
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
         
         bin_bs_neg_ll = np.load(file)
         alpha, beta, gamma, o, p, q, pre_n_bins = bin_bs_neg_ll['alpha'], bin_bs_neg_ll['beta'], bin_bs_neg_ll['gamma'], bin_bs_neg_ll['a'], bin_bs_neg_ll['b'], bin_bs_neg_ll['c'], bin_bs_neg_ll['n_bins']
@@ -289,9 +300,9 @@ class Subject:
         
         for j in range(n_bins):
             for i in range(n_conditions):
-                selected_p_acc = np.repeat(self.vars['p_acc'][np.newaxis,:,:,:], self.vars['t_pre'].shape[0], axis=0)[:,:,i,:][b_idx[:,:,i,:]==j+1].flatten()
-                weight = np.array([sum(selected_p_acc == p_acc) for p_acc in self.vars['p_acc'][:,i,:].flatten()]) / 2
-                axs[i,j].scatter(self.vars[x_var][:,i,:].flatten(), self.vars[p_acc_var][:,i,:].flatten(), s=weight, color='k', label=f'Cond{i+1} Bin{j+1}')
+                selected_p_acc = np.repeat(self.vars['p_acc'][np.newaxis,:,i,:].flatten(order='F'), self.vars['t_pre'].shape[0], axis=0)[b_idx[:,:,i,:].flatten(order='F')==j+1]
+                weight = np.array([sum(selected_p_acc == p_acc) for p_acc in self.vars['p_acc'][:,i,:].flatten(order='F')]) / 2
+                axs[i,j].scatter(self.vars[x_var][:,i,:].flatten(order='F'), self.vars[p_acc_var][:,i,:].flatten(order='F'), s=weight, color='k', label=f'Cond{i+1} Bin{j+1}')
                 axs[i,j].legend(loc='best', fontsize=pargs['fontsizes'][1])
                 axs[i,j].set_xlim(amp_min, amp_max)
                 axs[i,j].set_ylim(0.4, 1.1)
@@ -307,7 +318,7 @@ class Subject:
                 
         fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
         fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
-        fig.text(0.1, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
 
         savefig('plot_fit_' + file.name + '.svg', dpi=300, bbox_inches='tight')
         close()
@@ -317,7 +328,7 @@ class Subject:
     def plot_bin_threshold(self, bin_var, n_bins, x_var, b_acc_var, pargs, file, p_acc_var='p_acc'):
         n_trials, n_sessions, n_conditions, n_levels = self.vars[b_acc_var].shape
         
-        b_idx = self.bin_vars(bin_var, n_bins)
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
         
         bin_bs_neg_ll = np.load(file)
         alpha, beta, gamma, o, p, q, pre_n_bins = bin_bs_neg_ll['alpha'], bin_bs_neg_ll['beta'], bin_bs_neg_ll['gamma'], bin_bs_neg_ll['a'], bin_bs_neg_ll['b'], bin_bs_neg_ll['c'], bin_bs_neg_ll['n_bins']
@@ -341,13 +352,90 @@ class Subject:
     
         fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
         fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
-        fig.text(0.15, 0.9, self.plot_name, fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
 
         savefig('plot_threshold_' + file.name + '.svg', dpi=300, bbox_inches='tight')
         close()
         
         return alpha, beta, gamma
-            
-# %%
 
+    def plot_models_bin_fit(self, bin_var, n_bins, x_var, t_pre_var, models, pargs):
+        n_trials, n_sessions, n_conditions, n_levels = self.vars[t_pre_var].shape
+        
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
+        
+        fig, axs = subplots(nrows=n_conditions, ncols=len(models), figsize=pargs['figsize'], constrained_layout=True)
+        
+        for m, model in enumerate(models):
+            responses = self.vars[model]
+            for i in range(n_conditions):
+                if len(models) == 1 or n_conditions == 1:
+                    a_idx = m if n_conditions == 1 else i
+                else:
+                    a_idx = i,m
+                    
+                for b in range(n_bins):
+                    amp = np.repeat(self.vars[x_var][:,i,:].flatten(order='F'), self.vars[t_pre_var].shape[0])[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    stimulus = self.vars[t_pre_var][:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    response = responses[:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    
+                    x = np.linspace(0,amp.max()*1.2, 500)
+                    dp, gamma= glm_cont(amp, stimulus, response)
+                    k,_ = curve_fit(linear_dp_amp, amp[dp>0], dp[dp>0], bounds=((0,np.inf)))
+                    y = linear_dp_amp(x, k)
+        
+                    axs[a_idx].scatter(amp, dp, s=pargs['fontsizes'][0], c=pargs['colors'][b], label=model+':bin'+str(b+1))
+                    axs[a_idx].scatter(x, y, s=3, c=pargs['colors'][b], linewidth=0.5)
+                    
+                axs[a_idx].legend(loc='best', fontsize=pargs['fontsizes'][2])
+                axs[a_idx].tick_params(axis='x', labelsize= pargs['fontsizes'][2])
+                axs[a_idx].tick_params(axis='y', labelsize= pargs['fontsizes'][2])
+    
+        fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
+        fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
+        fig.text(1, 0, 'low amp_sim', ha='center', fontsize=pargs['fontsizes'][1])
+        fig.text(1, 1, 'high amp_sim', ha='center', fontsize=pargs['fontsizes'][1])
+
+        savefig('plot_models_bin_fit_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
+        close()
+
+    def plot_models_bin_threshold(self, bin_var, n_bins, x_var, t_pre_var, models, pargs):
+        n_trials, n_sessions, n_conditions, n_levels = self.vars[t_pre_var].shape
+        
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
+        
+        low_spat_sim = np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)])
+        high_spat_sim = np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])
+        
+        db_th = np.zeros((len(models), n_conditions, n_bins))
+        fig, ax = subplots(figsize=pargs['figsize'], constrained_layout=True)
+        
+        for m, model in enumerate(models):
+            responses = self.vars[model]
+            for i in range(n_conditions):
+                for b in range(n_bins):
+                    amp = np.repeat(self.vars[x_var][:,i,:].flatten(order='F'), self.vars[t_pre_var].shape[0])[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    stimulus = self.vars[t_pre_var][:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    response = responses[:,:,i,:].flatten(order='F')[b_idx[:,:,i,:].flatten(order='F')==b+1]
+                    dp, gamma= glm_cont(amp, stimulus, response)
+                    db_th[m,i,b] = decibel(linear_cont_th(amp[dp>0], stimulus[dp>0], response[dp>0]))
+        
+            ax.scatter(low_spat_sim, db_th[m,0,:], s=pargs['fontsizes'][0]*5, c=pargs['colors'][m], label=model)
+            ax.scatter(high_spat_sim, db_th[m,1,:], s=pargs['fontsizes'][0]*5, c=pargs['colors'][m])
+            plot(low_spat_sim, db_th[m,0,:], '--', color=pargs['colors'][m])
+            plot(high_spat_sim, db_th[m,1,:], '-', color=pargs['colors'][m])
+    
+        ax.legend(loc='best', fontsize=pargs['fontsizes'][1])
+        ax.tick_params(axis='x', labelsize= pargs['fontsizes'][2])
+        ax.tick_params(axis='y', labelsize= pargs['fontsizes'][2])
+    
+        fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
+        fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
+
+        savefig('plot_models_bin_threshold_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
+        close()
+
+        return db_th
 
