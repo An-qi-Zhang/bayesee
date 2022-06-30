@@ -1,5 +1,6 @@
 #%%
 import numpy as np
+import math
 from skimage.transform import resize
 from scipy.signal import sawtooth, square
 
@@ -108,21 +109,21 @@ def cut_randomly(large, small):
     return large[upleft_i:upleft_i+s_row, upleft_j:upleft_j+s_col]
 
 #%%
-def spatial_similarity(img_a, img_b, window=None):
+def spatial_cosine_similarity(img_a, img_b, window=None):
     if window is None:
-        return nb2dot(img_a, img_b) / (nb2dot(img_a, img_a)*nb2dot(img_b, img_b))
+        return nb2dot(img_a, img_b) / math.sqrt(nb2dot(img_a, img_a)*nb2dot(img_b, img_b))
     else:
         win_img_a, win_img_b = img_a * window, img_b * window
-        return nb2dot(win_img_a, win_img_b) / (nb2dot(win_img_a, win_img_a)*nb2dot(win_img_b, win_img_b))
+        return nb2dot(win_img_a, win_img_b) / math.sqrt(nb2dot(win_img_a, win_img_a)*nb2dot(win_img_b, win_img_b))
 
 #%%
-def amplitude_similarity(img_a, img_b, window=None):
+def amplitude_cosine_similarity(img_a, img_b, window=None):
     if window is None:
         amp_img_a, amp_img_b = np.abs(np.fft.fftshift(np.fft.fft2(img_a))), np.abs(np.fft.fftshift(np.fft.fft2(img_b)))
     else:
         amp_img_a, amp_img_b = np.abs(np.fft.fftshift(np.fft.fft2(img_a*window))), np.abs(np.fft.fftshift(np.fft.fft2(img_b*window)))
         
-    return nb2dot(amp_img_a, amp_img_b) / (nb2dot(amp_img_a, amp_img_a)*nb2dot(amp_img_b, amp_img_b))
+    return nb2dot(amp_img_a, amp_img_b) / math.sqrt(nb2dot(amp_img_a, amp_img_a)*nb2dot(amp_img_b, amp_img_b))
         
 #%%
 def power_noise(row, col, power, mean=0, std=1):
