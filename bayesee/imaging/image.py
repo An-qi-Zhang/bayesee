@@ -128,7 +128,7 @@ def amplitude_cosine_similarity(img_a, img_b, window=None):
 #%%
 def power_noise(row, col, power, mean=0, std=1):
     white_noise = np.random.normal(size=(row, col))
-    power_filter = exponential_distance(row, col, (row-row%2)/2, (col-col%2)/2, power)
+    power_filter = exponential_distance(row, col, row//2, col//2, power)
     empowered_noise = filter_fft(white_noise, power_filter)
     empowered_noise -= empowered_noise.mean()
     return std*empowered_noise/empowered_noise.std()+mean
@@ -136,12 +136,11 @@ def power_noise(row, col, power, mean=0, std=1):
 #%%
 def power_noise_patches(p_row, p_col, f_row, f_col, power, num, mean=0, std=1):
     white_noise_field = np.random.normal(size=(f_row, f_col))
-    power_filter = exponential_distance(f_row, f_col, (f_row-f_row%2)/2, (f_col-f_col%2)/2, power)
-    xx, yy = np.meshgrid(range(f_row), range(f_col), sparse=True)
-    xx = xx - (f_row-f_row%2)/2
-    yy = yy - (f_col-f_col%2)/2
-    power_filter[(xx<-p_row/2) | (xx>p_row/2) | (yy<-p_col/2) | (yy>p_col/2)] = 0 # remove high frequencies
+    power_filter = exponential_distance(f_row, f_col, f_row//2, f_col//2, power)
+    freq_per_img = exponential_distance(f_row, f_col, f_row//2, f_col//2, 1)
+    power_filter[freq_per_img<min(f_row/p_row, f_col/p_col)] = 0
     empowered_noise_field = filter_fft(white_noise_field, power_filter)
+    
     empowered_noise_field -= empowered_noise_field.mean()
     empowered_noise_field = std*empowered_noise_field/empowered_noise_field.std() + mean
     
