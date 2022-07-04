@@ -16,6 +16,12 @@ from bayesee.imaging.filter import *
 class Observer:
     def __init__(self, method='TM', resp_func=None, whiten=None, weight=None, csf=None, uncer=None, inner_prod=None):
         self.method = method
+        self.resp_func = resp_func
+        self.whiten = whiten
+        self.weight = weight
+        self.csf = csf
+        self.uncer = uncer
+        self.inner_prod = inner_prod
         
         if inner_prod is None:
             def x_size_conv(x, y):
@@ -129,15 +135,19 @@ class Observer:
             self.respond = lambda img, tar: func(img, tar, whiten, weight)
         elif self.method == 'ETM':
             def func(img, tar, csf):
-                csfed_img = filter_fft(img, csf_filter(*img.shape,**csf))
-                csfed_tar = filter_fft(tar, csf_filter(*tar.shape, **csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_img, csfed_tar = filter_fft(img, csf_img_mat), filter_fft(tar, csf_tar_mat)
                 return self.inner_prod(csfed_img, csfed_tar), csfed_img, csfed_tar
             
             self.respond = lambda img, tar: func(img, tar, csf)
         elif self.method == 'RETM':
             def func(img, tar, weight, csf):
-                csfed_img = filter_fft(img, csf_filter(*img.shape,**csf))
-                csfed_tar = filter_fft(tar, csf_filter(*tar.shape, **csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_img, csfed_tar = filter_fft(img, csf_img_mat), filter_fft(tar, csf_tar_mat)
                 
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local standard deviation matrix of the image.
@@ -165,8 +175,10 @@ class Observer:
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                csfed_weighted_img = filter_fft((img-img.mean())*weight_img, csf_filter(*img.shape,**csf))
-                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, csf_filter(*tar.shape,**csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_weighted_img, csfed_weighted_tar = filter_fft((img-img.mean())*weight_img, csf_img_mat), filter_fft((tar-tar.mean())*weight_tar, csf_tar_mat)
                 
                 return self.inner_prod(csfed_weighted_img, csfed_weighted_tar), csfed_weighted_img, csfed_weighted_tar
             

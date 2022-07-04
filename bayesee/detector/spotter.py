@@ -21,7 +21,7 @@ class Spotter(Observer):
     def __init__(self, method='TM', resp_func=None, whiten=None, weight=None, csf=None, uncer=None, inner_prod=None):
         
         super().__init__(method, resp_func, whiten, weight, csf, uncer, inner_prod)
-    
+
         if inner_prod is None:
             def x_size_dot(img, tar):
                 img_cut = cut_center(img, tar)
@@ -46,8 +46,6 @@ class UncertainSpotter(Observer):
             inner_prod = x_size_dot
 
         super().__init__(method, resp_func, whiten, weight, csf, uncer, inner_prod)
-        
-        self.uncer = uncer
         
         if self.method == 'UTM':
             def func(img, tar, uncer):
@@ -250,8 +248,10 @@ class UncertainSpotter(Observer):
             self.respond = lambda img, tar: func(img, tar, whiten, weight, uncer)
         elif self.method == 'UETM':
             def func(img, tar, csf, uncer):
-                csfed_img = filter_fft(img, csf_filter(*img.shape,**csf))
-                csfed_tar = filter_fft(tar, csf_filter(*tar.shape, **csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_img, csfed_tar = filter_fft(img, csf_img_mat), filter_fft(tar, csf_tar_mat)
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
@@ -278,8 +278,10 @@ class UncertainSpotter(Observer):
             self.respond = lambda img, tar: func(img, tar, csf, uncer)
         elif self.method == 'URETM':
             def func(img, tar, weight, csf, uncer):
-                csfed_img = filter_fft(img, csf_filter(*img.shape,**csf))
-                csfed_tar = filter_fft(tar, csf_filter(*tar.shape, **csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_img, csfed_tar = filter_fft(img, csf_img_mat), filter_fft(tar, csf_tar_mat)
                 
                 if weight.shape == img.shape:
                     weight_img = weight # Weighting matrix is the multiplicative inverse of the local standard deviation matrix of the image.
@@ -327,8 +329,10 @@ class UncertainSpotter(Observer):
                     
                 weight_tar = cut_center(weight_img, tar)
                 
-                csfed_weighted_img = filter_fft((img-img.mean())*weight_img, csf_filter(*img.shape,**csf))
-                csfed_weighted_tar = filter_fft((tar-tar.mean())*weight_tar, csf_filter(*tar.shape,**csf))
+                csf_img_mat, csf_tar_mat = csf_filter(*img.shape,**csf), csf_filter(*tar.shape,**csf)
+                csf_img_mat /= csf_img_mat.max()
+                csf_tar_mat /= csf_tar_mat.max()
+                csfed_weighted_img, csfed_weighted_tar = filter_fft((img-img.mean())*weight_img, csf_img_mat), filter_fft((tar-tar.mean())*weight_tar, csf_tar_mat)
                 
                 size = uncer['size']
                 dist = distance_to_point(*img.shape, img.shape[0]//2,img.shape[1]//2)
@@ -359,7 +363,7 @@ class UncertainSpotter(Observer):
     def give_response(self, img, tar):
         self.responses, _, _ = self.respond(img, tar)
         if self.uncer['focus'] == "max":
-            self.response = self.responses.max()
+            self.response = self.responses[self.responses!=0].max()
         elif self.uncer['focus'] == "sum":
             self.response = self.responses.sum()
         return self.response

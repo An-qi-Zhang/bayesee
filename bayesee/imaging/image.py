@@ -110,6 +110,7 @@ def cut_randomly(large, small):
 
 #%%
 def spatial_cosine_similarity(img_a, img_b, window=None):
+    
     if window is None:
         return nb2dot(img_a, img_b) / math.sqrt(nb2dot(img_a, img_a)*nb2dot(img_b, img_b))
     else:

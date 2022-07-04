@@ -2,10 +2,11 @@ import numpy as np
 from numba import njit, prange
 import math
 import scipy as sp
+from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
 #%%
 def filter_fft(x, fft_filter):
-    return np.abs(np.fft.ifft2(np.fft.ifftshift(np.fft.fftshift(np.fft.fft2(x))*fft_filter)))
+    return np.real_if_close(ifft2(ifftshift(fftshift(fft2(x))*fft_filter)))
 
 #%%
 def luminance_modulate_straight(x, direction, cut, ratio, flip=True):
@@ -102,18 +103,18 @@ def csf_filter(row, col, ppd=60, d=4, w=550, a=0.85, b=0.15, c=0.065, n=2):
     # freq_deg: spatial frequency (cycles/degree)
     
     xx, yy = np.meshgrid(range(row), range(col), sparse=True)
-    xx_img = xx - (row-row%2)/2
-    yy_img = yy - (col-col%2)/2
+    xx_img = xx - row//2
+    yy_img = yy - col//2
     xx_deg = xx_img / (row/ppd)
     yy_deg = yy_img / (col/ppd)
     freq_deg = np.hypot(xx_deg, yy_deg)
-    
-    u0 = (d*np.pi*10**6/(w*180))
+
+    u0 = d*np.pi*10**6/(w*180)
     u1 = 21.95 - 5.512*d + 0.3922*d**2
-    uh = freq_deg/ u0
+    uh = freq_deg / u0
     D = (np.arccos(uh) - uh*np.sqrt(1-uh**2))*2/np.pi
     otf = np.sqrt(D)*(1 + (freq_deg/u1)**2)**(-0.62)
-    csf = otf**(1-a*np.exp(-b*freq_deg**n))**np.exp(-c*freq_deg)
+    csf = otf*(1-a*np.exp(-b*freq_deg**n))*np.exp(-c*freq_deg)
     csf[row//2, col//2] = 0 # physically meaningless
     
     return csf
