@@ -6,7 +6,7 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
 #%%
 def filter_fft(x, fft_filter):
-    return np.real_if_close(ifft2(ifftshift(fftshift(fft2(x))*fft_filter)))
+    return np.real(ifft2(ifftshift(fftshift(fft2(x))*fft_filter)))
 
 #%%
 def luminance_modulate_straight(x, direction, cut, ratio, flip=True):

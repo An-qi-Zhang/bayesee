@@ -125,6 +125,19 @@ def amplitude_cosine_similarity(img_a, img_b, window=None):
         amp_img_a, amp_img_b = np.abs(np.fft.fftshift(np.fft.fft2(img_a*window))), np.abs(np.fft.fftshift(np.fft.fft2(img_b*window)))
         
     return nb2dot(amp_img_a, amp_img_b) / math.sqrt(nb2dot(amp_img_a, amp_img_a)*nb2dot(amp_img_b, amp_img_b))
+
+#%%
+def partial_masking_factor(back, tar, window=None):
+    if window is None:
+        win_tar, win_back = tar, back
+    else:
+        win_tar, win_back = tar * window, back * window
+        
+    std_mat = local_std(win_back, 3)
+    std_mat /= std_mat.mean()
+    std_mat[std_mat==0] = 1
+    tar_pm = tar / (math.sqrt(nb2dot(tar, tar)) * std_mat)
+    return math.sqrt(nb2dot(tar_pm, tar_pm))
         
 #%%
 def power_noise(row, col, power, mean=0, std=1):

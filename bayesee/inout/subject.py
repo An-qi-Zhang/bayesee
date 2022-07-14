@@ -11,6 +11,7 @@ from matplotlib.pyplot import *
 #%%
 from bayesee.operation.dp import *
 from bayesee.operation.mathfunc import *
+from bayesee.imaging.image import *
 
 #%%
 class Subject:
@@ -337,8 +338,8 @@ class Subject:
         
         fig, ax = subplots(figsize=pargs['figsize'], constrained_layout=True)
         
-        low_spat_sim = np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)])
-        high_spat_sim = np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])
+        spat_sim_low_amp_sim = np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)])
+        spat_sim_high_amp_sim = np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])
         db_CI68_low_spat_sim = alpha.std(axis=1)[0,:]
         db_CI68_high_spat_sim = alpha.std(axis=1)[1,:]
         ax.errorbar(low_spat_sim, db_th[0,:], yerr=db_CI68_low_spat_sim, fmt='kx', mfc='w', capsize=pargs['fontsizes'][1], markersize=pargs['fontsizes'][0], label='low amp_sim')
@@ -405,8 +406,8 @@ class Subject:
         
         b_idx = self.bin_vars(bin_var, n_bins, axis=2)
         
-        low_spat_sim = np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)])
-        high_spat_sim = np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])
+        spat_sim_low_amp_sim = np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)])
+        spat_sim_high_amp_sim = np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])
         
         db_th = np.zeros((len(models), n_conditions, n_bins))
         fig, ax = subplots(figsize=pargs['figsize'], constrained_layout=True)
@@ -439,3 +440,61 @@ class Subject:
 
         return db_th
 
+    def bin_partial_masking_histogram(self, bin_var, n_bins, x_var, pargs):
+        n_trials, n_sessions, n_conditions, n_levels = self.vars[x_var].shape
+        
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
+
+        fig, axs = subplots(nrows=1, ncols=n_conditions, figsize=pargs['figsize'], constrained_layout=True)
+        
+        for c in range(n_conditions):
+            for b in range(n_bins):
+                axs[c].hist(self.vars[x_var][:,:,c,:][b_idx[:,:,c,:]==b+1].flatten(order='F'), bins=pargs['hist_bins'], histtype='step', color=pargs['colors'][b], label=f'Bin:{b+1}')
+    
+            axs[c].legend(loc='best', fontsize=pargs['fontsizes'][1])
+            axs[c].tick_params(axis='x', labelsize= pargs['fontsizes'][2])
+            axs[c].tick_params(axis='y', labelsize= pargs['fontsizes'][2])
+    
+        fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
+        fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
+        fig.text(0.3, 1, 'Low Amplitude Similarity', ha='center', fontsize=pargs['fontsizes'][1])
+        fig.text(0.7, 1, 'High Amplitude Similarity', ha='center', fontsize=pargs['fontsizes'][1])
+
+        savefig('hist_bin_pmf_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
+        close()
+    
+    def bin_partial_masking_quantiles(self, bin_var, n_bins, x_var, pargs):
+        n_trials, n_sessions, n_conditions, n_levels = self.vars[x_var].shape
+        
+        b_idx = self.bin_vars(bin_var, n_bins, axis=2)
+           
+        pmf_median = np.zeros((n_conditions,n_bins))
+        pmf_errors = np.zeros((n_conditions,2,n_bins))
+        
+        spat_sims = [np.array([self.vars[bin_var][:,:,0,:][b_idx[:,:,0,:]==b+1].mean() for b in range(n_bins)]), np.array([self.vars[bin_var][:,:,1,:][b_idx[:,:,1,:]==b+1].mean() for b in range(n_bins)])]
+        
+        fig, ax = subplots(figsize=pargs['figsize'], constrained_layout=True)
+        
+        for c in range(n_conditions):
+            for b in range(n_bins):
+                pmf_median[c,b] = np.median(self.vars[x_var][:,:,c,:][b_idx[:,:,c,:]==b+1])
+                pmf_errors[c,0,b] = pmf_median[c,b] - np.quantile(self.vars[x_var][:,:,c,:][b_idx[:,:,c,:]==b+1], 0.16)
+                pmf_errors[c,1,b] = np.quantile(self.vars[x_var][:,:,c,:][b_idx[:,:,c,:]==b+1], 0.84) - pmf_median[c,b]
+                
+            ax.errorbar(spat_sims[c], pmf_median[c,:], yerr=pmf_errors[c,:,:], marker=pargs['markers'][c], c=pargs['colors'][c], mfc=pargs['colors'][c], mec=pargs['colors'][c], ecolor=pargs['colors'][c], capsize=pargs['fontsizes'][1], markersize=pargs['fontsizes'][1], label=pargs['legends'][c], alpha=pargs['alpha'])
+                
+            ax.legend(loc='upper right', fontsize=pargs['fontsizes'][2])
+            
+            ax.tick_params(axis='x', which='both', direction='out', length=0, width=0,pad=5, labelsize=pargs['fontsizes'][2], labelbottom=True, labeltop=False, grid_color='k', grid_alpha=1, grid_linewidth=1, grid_linestyle='--')
+            ax.grid(visible=True, which='minor', axis='x', linestyle='--', linewidth=pargs['linewidth'])
+            ax.tick_params(axis='y', which='major', direction='out', length=12, width=4, pad=3, labelsize=pargs['fontsizes'][2], left=True, right=True, labelleft=True, labelright=True)
+            ax.tick_params(axis='y', which='minor', direction='out', length=8, width=4, left=True, right=True, labelleft=False, labelright=False)
+    
+        fig.text(0.5, -0.05, pargs['x_label'], ha='center', fontsize=pargs['fontsizes'][0])
+        fig.text(-0.05, 0.5, pargs['y_label'], va='center', rotation='vertical', fontsize=pargs['fontsizes'][0])
+        fig.text(0, 1, self.plot_name, fontsize=pargs['fontsizes'][0])
+
+        savefig('quantile_bin_pmf_' + self.plot_name + '.svg', dpi=300, bbox_inches='tight')
+        close()
+        
